@@ -1,2 +1,2 @@
-# react4shell-site-combolist
+# react2shell-site-combolist
 Disclaimer: DO NOT USE FOR BAD PURPOSES UNDER ANY CIRCUMSTANCES
